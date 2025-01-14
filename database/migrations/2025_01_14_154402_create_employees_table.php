@@ -9,13 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('employees', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->string('name');
+            $table->string('image')->nullable();
+            $table->string('phone')->nullable();
+            $table->uuid('division_id');
+            $table->string('position')->nullable();
             $table->timestamps();
+
+            $table->foreign('division_id')->references('id')->on('divisions')->onDelete('cascade');
         });
     }
+
 
     /**
      * Reverse the migrations.

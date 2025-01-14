@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Division extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     public $incrementing = false;
-    public $timestamps = false;
-    protected $keyType = 'string';
+    public $timestamps = false;    
 
     protected $fillable = [
         'name',

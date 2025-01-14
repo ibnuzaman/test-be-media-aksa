@@ -7,15 +7,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Admin extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids;
     public $incrementing = false;
     public $timestamps = false;
-    protected $keyType = 'string';
-    protected $primaryKey = 'username';
-
+    
     protected $fillable = [
         'name',
         'username',
