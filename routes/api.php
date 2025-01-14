@@ -18,12 +18,13 @@ Route::get('/failure', function () {
 })->name('login');
 
 Route::post('/login', [AuthController::class, 'store']);
+
 Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth:sanctum');
-
-Route::get('/divisions', [DivisionController::class, 'index']);
-
-Route::post('/employees', [EmployeeController::class, 'store']);
-Route::get('/employees', [EmployeeController::class, 'index']);
-Route::put('/employees/{id}', [EmployeeController::class, 'update']);
-Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/divisions', [DivisionController::class, 'index']);
+    Route::post('/employees', [EmployeeController::class, 'store']);
+    Route::get('/employees', [EmployeeController::class, 'index']);
+    Route::put('/employees/{id}', [EmployeeController::class, 'update']);
+    Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
+});
 
