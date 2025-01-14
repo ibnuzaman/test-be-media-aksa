@@ -175,6 +175,26 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try{
+            $employee = Employee::findOrFail($id);
+            if(Storage::disk('public')->exists(str_replace(url('storage/'), '', $employee->image))){
+                Storage::disk('public')->delete(str_replace(url('storage/'), '', $employee->image));
+            }
+            $employee->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Employee deleted successfully'
+            ], 200);
+        }catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data not found'
+            ], 404);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
