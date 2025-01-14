@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AuthRequest;
+use App\Models\Admin;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+
 
 class AuthController extends Controller
 {
@@ -27,39 +30,32 @@ class AuthController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(AuthRequest $request) : JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'username' => 'required|string|max:255',
-                'password' => 'required|string|min:6',
-            ]);
-
-            if (!Auth::attempt($validated)) {
+            $validated = $request->validated();
+             
+            if (!Auth::guard('admin')->attempt($validated)) {
                 return response()->json([
-                    'message' => 'ussername or password is incorrect'
+                    'status' => 'error',
+                    'message' => 'username or password is incorrect'
                 ], 401);
             }
 
-            $user = $request->user();
-            $token = $user->createToken('API_SECRET_TOKEN', ['*']);
+            $admin = Auth::guard('admin')->user();
+            $data = Admin::where('username', $admin->username)->first();
+            $token = $data->createToken('API_SECRET_TOKEN', ['*']);
 
             return response()->json([
                 'status' => "success",
                 'message' => 'Login successful',
                 'data' => [
                     'token' => $token->plainTextToken,
-                    'admin' => [
-                        'id' => $request->user()->id,
-                        'name' => $request->user()->name,
-                        'username' => $request->user()->username,
-                        'phone' => $request->user()->phone,
-                        'email' => $request->user()->email,
-                    ]
+                    'admin' => $data
                 ]
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
+            return response()->json([                
                 'message' => 'An error occurred',
                 'error' => $e->getMessage()
             ], 500);
@@ -93,8 +89,25 @@ class AuthController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request) : JsonResponse
     {
-        //
+        try{
+            $token = $request->user()->currentAccessToken()->delete();
+            $request->user()->tokens->each(function ($token) {
+                $token->delete();
+            });
+            if (!$token) {
+                return response()->json(['error' => 'Unauthorized access'], 401);
+            } 
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logout successful'
+            ], 200);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
