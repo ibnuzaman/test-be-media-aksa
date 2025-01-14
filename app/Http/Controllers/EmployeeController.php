@@ -6,6 +6,8 @@ use App\Http\Requests\EmployeeRequest;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Division;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 
 class EmployeeController extends Controller
@@ -52,7 +54,7 @@ class EmployeeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(EmployeeRequest $request)
+    public function store(EmployeeRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -60,7 +62,7 @@ class EmployeeController extends Controller
             if (!$division) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Invalid division ID provided'
+                    'message' => 'Division ID is not valid'
                 ], 422);
             }
 
@@ -114,10 +116,59 @@ class EmployeeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(EmployeeRequest $request, string $id): JsonResponse
     {
-        //
+        try {
+            $validated = $request->validated();            
+            $employee = Employee::findOrFail($id);
+            $division = Division::find($validated['division_id']);
+
+            if (!$division) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Division ID is not valid'
+                ], 422);
+            }
+
+            if ($request->hasFile('image')) {
+                if (Storage::disk('public')->exists(str_replace(url('storage/'), '', $employee->image))) {
+                    Storage::disk('public')->delete(str_replace(url('storage/'), '', $employee->image));
+                }
+
+                $fileNameImage = time() . '.' . $request->file('image')->getClientOriginalExtension();
+                $pathImage = $request->file('image')->storeAs('image-employe', $fileNameImage, 'public');
+                $image = url('storage/' . $pathImage);
+            } else {
+                $image = $employee->image;
+            }
+
+            $employee->update([
+                'name' => $validated['name'],
+                'image' => $image,
+                'phone' => $validated['phone'],
+                'division_id' => $validated['division_id'],
+                'position' => $validated['position']
+            ]);         
+
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Employee updated successfully',                
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
     /**
      * Remove the specified resource from storage.

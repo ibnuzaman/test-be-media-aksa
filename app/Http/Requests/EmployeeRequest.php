@@ -23,13 +23,23 @@ class EmployeeRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $rules = [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:15',
             'division_id' => 'required|string',
             'position' => 'required|string|max:255',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
+
+        if ($this->isMethod('post')) {
+            $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+        }
+
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            $rules['image'] = 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+        }
+        
+        return $rules;
     }
 
 
